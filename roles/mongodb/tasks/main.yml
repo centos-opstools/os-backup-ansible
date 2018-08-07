@@ -1,0 +1,25 @@
+---
+
+- name: Get the MongoDB bind_ip
+  script: |
+    /bin/hiera mongodb::server::bind_ip
+  register: mongodb_host
+
+- name: Check if MongoDB is running
+  command: "mongo --quiet --eval 'db.runCommand( { ping: 1 } )'  --host {{ mongodb_host.stdout }} > /dev/null"
+  register: mongo_running
+  ignore_errors: yes
+
+- debug:
+    msg: "{{ mongo_running }}"
+
+- name: Create a MongoDB backup directory
+  file:
+    path: "{{ backup_temp_dir }}/mongodb"
+    state: directory
+  when: mongo_running.failed == false
+
+- name: Dump the MongoDB database
+  script: |
+    /bin/mongodump --oplog -o {{ backup_temp_dir }}/mongodb --host {{ mongodb_host.stdout }}
+  when: mongo_running.failed == false

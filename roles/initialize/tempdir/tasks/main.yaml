@@ -1,0 +1,12 @@
+---
+
+- name: Remove existing local backup directory
+  file:
+    path: "{{backup_temp_dir}}"
+    state: absent
+  when: not keep_temp_dirs
+
+- name: Create a temporary local backup directory
+  file:
+    path: "{{backup_temp_dir}}"
+    state: directory

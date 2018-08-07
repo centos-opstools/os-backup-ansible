@@ -1,0 +1,18 @@
+---
+
+- name: Create an archive of the filesystem
+  script: |
+    /bin/tar --ignore-failed-read --xattrs \
+      -zcf {{ backup_temp_dir }}/filesystem/{{ ansible_hostname }}.tar \
+      {% if config_dirs_exclude %}
+      {% for exclude in config_dirs_exclude %}
+      --exclude {{ exclude }} \
+      {% endfor %}
+      {% endif %}
+      {% if data_dirs_exclude %}
+      {% for exclude in data_dirs_exclude %}
+      --exclude {{ exclude }} \
+      {% endfor %}
+      {% endif %}
+      {{ ' '.join(config_dirs) }} {{ ' '.join(data_dirs) }}
+  delay: 60

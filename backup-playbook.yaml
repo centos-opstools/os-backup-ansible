@@ -1,0 +1,56 @@
+---
+
+- name: Initialize hosts
+  hosts:
+    - backup_server
+    - controller
+  tags:
+    - init
+  roles:
+    - initialize/tempdir
+
+- name: Backup control plane databases
+  hosts: controller[0]
+  tags:
+    - gather_data
+  tasks:
+    - import_role:
+        name: mongodb
+      when: backup_mongodb
+    - import_role:
+        name: mysql
+      when: backup_mysql
+    - import_role:
+        name: redis
+      when: backup_redis
+
+- name: Backup control plane configuration and data
+  hosts: controller
+  tags:
+    - gather_data
+  tasks:
+    - import_role:
+        name: filesystem
+      when: backup_filesystem
+
+- name: Finalize backup
+  hosts: backup_server
+  tags:
+    - gather_data
+    - finalize
+  tasks:
+    - import_role:
+        name: archive/transfer
+      when: "backup_filesystem || backup_mongodb || backup_mysql || backup_redis"
+    - import_role:
+        name: archive/finalize
+      when: "backup_filesystem || backup_mongodb || backup_mysql || backup_redis"
+
+- name: Cleanup
+  hosts:
+    - backup_server
+    - controller
+  tags:
+    - finalize
+  roles:
+    - cleanup

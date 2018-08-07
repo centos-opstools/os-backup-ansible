@@ -1,0 +1,25 @@
+---
+
+- name: Create a Redis backup directory
+  file:
+    path: "{{ backup_temp_dir }}/redis"
+    state: directory
+
+- name: Get redis_vip
+  script: |
+    /bin/hiera -c /etc/puppet/hiera.yaml redis_vip
+  register: redis_bind
+
+- name: Get Redis password
+  script: |
+    /bin/hiera -c /etc/puppet/hiera.yaml redis::masterauth
+  register: redis_masterauth
+
+- name: Dump the Redis database to the default directory
+  command: "/bin/redis-cli -a {{ redis_masterauth.stdout_lines[0] }} -h {{ redis_bind.stdout_lines[0] }} bgsave"
+
+- name: Copy the Redis database to the backup directory
+  copy:
+    remote_src: True
+    src: /var/lib/redis/dump.rdb
+    dest: "{{ backup_temp_dir }}/redis/dump.rdb"
