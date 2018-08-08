@@ -16,10 +16,26 @@
   register: redis_masterauth
 
 - name: Dump the Redis database to the default directory
-  command: "/bin/redis-cli -a {{ redis_masterauth.stdout_lines[0] }} -h {{ redis_bind.stdout_lines[0] }} bgsave"
+  script: |
+    {{ cmd_prefix }}{{ cmd_prefix_redis }} /bin/redis-cli
+      -a {{ redis_masterauth.stdout_lines[0] }}
+      -h {{ redis_bind.stdout_lines[0] }} bgsave
 
 - name: Copy the Redis database to the backup directory
   copy:
     remote_src: True
     src: /var/lib/redis/dump.rdb
-    dest: "{{ backup_temp_dir }}/redis/dump.rdb"
+    dest: "{{ backup_temp_dir_redis }}/dump.rdb"
+  when: not (cmd_prefix | search("docker") | bool)
+
+- name: Copy the Redis database to the backup directory
+  script: |
+    docker cp
+      {{ cmd_prefix_redis }}:/var/lib/redis/dump.rdb
+      {{ backup_temp_dir_redis }}/dump.rdb
+  when: cmd_prefix | search("docker") | bool
+
+- name: Archive the dump
+  archive:
+    dest: "{{ backup_temp_dir }}/overcloud-backup-redis.tar.gz"
+    path: "{{ backup_temp_dir_redis }}/*"
