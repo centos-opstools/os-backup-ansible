@@ -2,7 +2,7 @@
 
 - name: Create a MySQL database backup directory
   file:
-    path: "{{ backup_temp_dir }}/mysql"
+    path: "{{ backup_temp_dir_mysql }}"
     state: directory
 
 - name: Get the MySQL database password
@@ -12,18 +12,31 @@
 
 - name: Get a list of OpenStack databases
   script: |
-    /bin/mysql -uroot -p{{ mysql_password.stdout_lines[0] }} -e "select distinct table_schema from information_schema.tables where engine='innodb' and table_schema != 'mysql';" -s -N
+    {{ cmd_prefix }}{{ cmd_prefix_mysql }} /bin/mysql
+      -uroot -p{{ mysql_password.stdout_lines[0] }}
+      -e "select distinct table_schema from information_schema.tables
+            where engine='innodb' and table_schema != 'mysql';" -s -N
   register: mysql_databases
 
 - name: Dump the OpenStack databases
   script: |
-    /bin/mysqldump -uroot -p{{ mysql_password.stdout_lines[0] }} --single-transaction --databases {{ mysql_databases.stdout_lines | join(' ') }} > {{ backup_temp_dir }}/mysql/openstack_databases.sql
+    {{ cmd_prefix }}{{ cmd_prefix_mysql }} /bin/mysqldump
+      -uroot -p{{ mysql_password.stdout_lines[0] }}
+      --single-transaction
+      --log-error={{ mysql_dump_log }}
+      --databases {{ mysql_databases.stdout_lines | join(' ') }}
+    > {{ backup_temp_dir_mysql }}/openstack_databases.sql
 
-- name:  DUmp a MySQL grants databases
+- name:  Dump a MySQL grants databases
   script: |
-    /bin/mysql -uroot -p{{ mysql_password.stdout_lines[0] }} -e "SELECT CONCAT('\"SHOW GRANTS FOR ''',user,'''@''',host,''';\"') FROM mysql.user where (length(user) > 0 and user NOT LIKE 'root')" -s -N | xargs -n1 mysql -uroot -p{{ mysql_password.stdout_lines[0] }} -s -N -e | sed 's/$/;/' > {{ backup_temp_dir }}/mysql/openstack_databases_grants.sql
+    {{ cmd_prefix }}{{ cmd_prefix_mysql }} /bin/mysql
+      -uroot -p{{ mysql_password.stdout_lines[0] }}
+      -s -N -e "SELECT CONCAT('\"SHOW GRANTS FOR ''',user,'''@''',host,''';\"')
+            FROM mysql.user where (length(user) > 0 and user NOT LIKE 'root')" |
+    xargs -n1 mysql -uroot -p{{ mysql_password.stdout_lines[0] }} -s -N -e |
+    sed 's/$/;/' > {{ backup_temp_dir_mysql }}/openstack_grants.sql
 
 - name: Archive the dumps
   archive:
-    dest: "{{ backup_temp_dir }}/overcloud-backup-mysql.tar"
-    path: "{{ backup_temp_dir }}/mysql/*"
+    dest: "{{ backup_temp_dir }}/overcloud-backup-mysql.tar.gz"
+    path: "{{ backup_temp_dir_mysql }}/*"

@@ -1,1 +1,6 @@
 ---
+
+backup_temp_dir_mysql: "{{ backup_temp_dir }}/mysql"
+mysql_dump_log: "{{ backup_temp_dir_mysql }}/dump.log"
+
+cmd_prefix_mysql: {{ cmd_prefix | ternary('mysql','') }}

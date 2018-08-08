@@ -1,3 +1,4 @@
 ---
 
-backup_temp_dir: /var/tmp/overcloud-backup/
+keep_temp_dirs: false
+backup_temp_dir: /var/tmp/overcloud-backup

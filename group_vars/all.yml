@@ -1,6 +1,6 @@
 ---
 
-keep_temp_dirs: false
+cmd_prefix: 'docker exec '
 
 backup_filesystem: true
 backup_mongodb: true
