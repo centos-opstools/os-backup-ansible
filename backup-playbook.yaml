@@ -24,7 +24,7 @@
         name: redis
       when: backup_redis
 
-- name: Backup control plane configuration and data
+- name: Backup control plane configuration and gather data
   hosts: controller
   tags:
     - gather_data
@@ -32,6 +32,11 @@
     - import_role:
         name: filesystem
       when: backup_filesystem
+    - import_role:
+        name: gather/download
+      when: backup_filesystem or backup_mongodb or backup_mysql or backup_redis
+    - import_role:
+        name: gather/cleanup
 
 - name: Finalize backup
   hosts: backup_server
@@ -40,17 +45,7 @@
     - finalize
   tasks:
     - import_role:
-        name: archive/transfer
-      when: "backup_filesystem || backup_mongodb || backup_mysql || backup_redis"
+        name: gather/archive
+      when: backup_filesystem or backup_mongodb or backup_mysql or backup_redis
     - import_role:
-        name: archive/finalize
-      when: "backup_filesystem || backup_mongodb || backup_mysql || backup_redis"
-
-- name: Cleanup
-  hosts:
-    - backup_server
-    - controller
-  tags:
-    - finalize
-  roles:
-    - cleanup
+        name: gather/cleanup

@@ -16,10 +16,11 @@
   register: redis_masterauth
 
 - name: Dump the Redis database to the default directory
-  script: |
-    {{ cmd_prefix }}{{ cmd_prefix_redis }} /bin/redis-cli
-      -a {{ redis_masterauth.stdout_lines[0] }}
-      -h {{ redis_bind.stdout_lines[0] }} bgsave
+  shell:
+    cmd: |
+      {{ cmd_prefix }}{{ cmd_prefix_redis }} /bin/redis-cli \
+        -a {{ redis_masterauth.stdout_lines[0] }} \
+        -h {{ redis_bind.stdout_lines[0] }} bgsave
 
 - name: Copy the Redis database to the backup directory
   copy:
@@ -29,10 +30,11 @@
   when: not (cmd_prefix | search("docker") | bool)
 
 - name: Copy the Redis database to the backup directory
-  script: |
-    docker cp
-      {{ cmd_prefix_redis }}:/var/lib/redis/dump.rdb
-      {{ backup_temp_dir_redis }}/dump.rdb
+  shell:
+    cmd: |
+      docker cp \
+        {{ cmd_prefix_redis }}:/var/lib/redis/dump.rdb \
+        {{ backup_temp_dir_redis }}/dump.rdb
   when: cmd_prefix | search("docker") | bool
 
 - name: Archive the dump

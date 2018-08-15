@@ -1,0 +1,24 @@
+---
+
+- name: Get the timestamp
+  set_fact:
+    fixed_timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
+
+- name: Create backup archive file name
+  set_fact:
+    archive_fname: >-
+      {{ backup_temp_dir }}/overcloud-backup-{{ fixed_timestamp }}.tar.gz
+
+- name: Create an archive of the filesystem
+  script: |
+    /usr/bin/tar --ignore-failed-read --xattrs -zcf {{ archive_fname }} \
+      {{ backup_temp_dir }}/*
+
+- name: Move archived backup to destionation
+  script: |
+    /usr/bin/mv {{ archive_fname }} {{ backup_destination }}
+
+
+- name: Execute post-backup script
+  shell: "{{ backup_post_script }} >> {{ backup_post_log }}"
+  when: run_post_script

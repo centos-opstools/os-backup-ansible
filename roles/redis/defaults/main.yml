@@ -3,4 +3,4 @@
 backup_temp_dir_redis: "{{ backup_temp_dir }}/redis"
 mysql_dump_log: "{{ backup_temp_dir_mysql }}/dump.log"
 
-cmd_prefix_redis: {{ cmd_prefix | ternary('redis','') }}
+cmd_prefix_redis: "{{ cmd_prefix | ternary('redis','') }}"
