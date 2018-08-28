@@ -1,0 +1,7 @@
+---
+
+- name: Delete temporary directory
+  file:
+    state: absent
+    path: "{{ backup_temp_dir }}/"
+  when: not keep_temp_dirs

@@ -1,0 +1,6 @@
+---
+
+- name: Create a temporary local backup directory
+  file:
+    path: "{{backup_temp_dir}}"
+    state: directory

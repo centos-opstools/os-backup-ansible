@@ -1,0 +1,8 @@
+---
+
+cmd_prefix: '/usr/bin/docker exec '
+
+backup_filesystem: true
+backup_mongodb: true
+backup_mysql: true
+backup_redis: true

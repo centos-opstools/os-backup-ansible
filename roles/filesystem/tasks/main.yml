@@ -1,0 +1,30 @@
+---
+
+- name: Change directories in case of containerized deployment
+  set_fact:
+    config_dirs:
+      - /var/lib/config-data/puppet-generated
+    data_dirs: []
+    data_dirs_exclude: []
+  when: cmd_prefix | search("docker") | bool
+
+- name: Create backup archive file name
+  set_fact:
+    archive_fname: >-
+      {{ backup_temp_dir }}/overcloud-backup-fs-{{ ansible_hostname }}.tar.gz
+
+- name: Create an archive of the filesystem
+  script: |
+    /usr/bin/tar --ignore-failed-read --xattrs -zcf {{ archive_fname }} \
+      {% if config_dirs_exclude %}
+      {% for exclude in config_dirs_exclude %}
+      --exclude {{ exclude }} \
+      {% endfor %}
+      {% endif %}
+      {% if data_dirs_exclude %}
+      {% for exclude in data_dirs_exclude %}
+      --exclude {{ exclude }} \
+      {% endfor %}
+      {% endif %}
+      {{ ' '.join(config_dirs) }} {{ ' '.join(data_dirs) }}
+  delay: 60

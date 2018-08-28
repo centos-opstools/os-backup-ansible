@@ -1,0 +1,12 @@
+---
+
+- name: Find backup files' names
+  shell: (cd {{ backup_temp_dir }}; find . -maxdepth 1 -type f) | cut -d'/' -f2
+  register: backup_files
+
+- name: Fetch all backup files
+  fetch:
+    src: "/{{ backup_temp_dir }}/{{ item }}"
+    dest: "{{ backup_temp_dir }}/"
+    flat: yes
+  loop: "{{ backup_files.stdout_lines }}"

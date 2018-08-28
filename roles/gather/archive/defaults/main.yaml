@@ -1,0 +1,6 @@
+---
+
+run_post_script: false
+backup_post_script: echo
+backup_post_log: /dev/null
+backup_destination: "$HOME"
